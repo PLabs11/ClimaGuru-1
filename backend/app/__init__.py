@@ -78,7 +78,7 @@ def create_app(config_name=None):
 
 def register_blueprints(app):
     """Registrar todos los blueprints de la aplicación"""
-    from app.routes import auth_bp, usuarios_bp, api_keys_bp, consultas_bp, datos_bp
+    from app.routes import auth_bp, usuarios_bp, api_keys_bp, consultas_bp, datos_bp, dashboard_bp
     
     # Registrar con prefijo /api
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -86,6 +86,7 @@ def register_blueprints(app):
     app.register_blueprint(api_keys_bp, url_prefix='/api/api-keys')
     app.register_blueprint(consultas_bp, url_prefix='/api/consultas')
     app.register_blueprint(datos_bp, url_prefix='/api/datos')
+    app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
     
     # Ruta de salud del servidor
     @app.route('/health')

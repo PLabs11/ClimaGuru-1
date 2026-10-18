@@ -103,6 +103,70 @@ class MeteoblueClient:
             print(f"📊 Datos guardados en: {filepath}")
         
         return data
+
+    def get_nmm_dataset(self, lat: float, lon: float, asl: int = 0,
+                        domain: str = "NEMSAUTO",
+                        time_resolution: str = "hourly",
+                        codes: Optional[list] = None,
+                        save_data: bool = True,
+                        location_name: str = "location") -> Dict[str, Any]:
+        """
+        Consulta directa a la Dataset API de Meteoblue para modelos NMM / NEMS.
+        
+        Args:
+            lat: Latitud
+            lon: Longitud
+            asl: Altitud sobre el nivel del mar en metros
+            domain: Dominio del modelo ('NMM18' para Suramérica, 'NEMSAUTO' para selección automática de máxima resolución)
+            time_resolution: Resolución temporal ('hourly' o 'daily')
+            codes: Lista de códigos y niveles meteorológicos
+            save_data: Si guardar los datos en data_meteoblue/
+            location_name: Nombre de la ubicación
+            
+        Returns:
+            Diccionario con la respuesta cruda de la Dataset API
+        """
+        if codes is None:
+            # Códigos estándar: 11 = Temp 2m, 32 = Viento 10m, 61 = Precipitación
+            codes = [
+                {"code": 11, "level": "2 m above gnd"},
+                {"code": 32, "level": "10 m above gnd"},
+                {"code": 61, "level": "surface"}
+            ]
+
+        url = f"{self.base_url}/dataset/query?apikey={self.api_key}"
+        payload = {
+            "units": {
+                "temperature": "C",
+                "velocity": "km/h",
+                "precipitation": "mm"
+            },
+            "geometry": {
+                "type": "MultiPoint",
+                "coordinates": [[float(lon), float(lat), int(asl)]]
+            },
+            "queries": [
+                {
+                    "domain": domain,
+                    "timeResolution": time_resolution,
+                    "codes": codes
+                }
+            ]
+        }
+
+        response = requests.post(url, json=payload, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+
+        if save_data:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"dataset_{domain.lower()}_{location_name.lower().replace(' ', '_')}_{timestamp}.json"
+            filepath = self.meteoblue_dir / filename
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"📊 Dataset NMM/NEMS guardado en: {filepath}")
+
+        return data
     
     def get_meteogram_image(self, lat: float, lon: float, asl: int = 0,
                            location_name: str = "Location",

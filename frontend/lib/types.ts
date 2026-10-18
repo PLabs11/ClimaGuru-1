@@ -31,12 +31,48 @@ export interface DatosClima {
   id: number;
   consulta_id: number;
   temperatura: number | null;
+  temperatura_min?: number | null;
+  temperatura_max?: number | null;
   presion: number | null;
   humedad: number | null;
   viento_vel: number | null;
   viento_dir: string | null;
+  precipitacion?: number | null;
+  descripcion?: string | null;
   fuentes: string | null;
+  fuentes_lista?: string[];
   guardado_en: string;
+  pronostico?: Array<{
+    fecha: string;
+    temperatura?: number | null;
+    temperatura_max?: number | null;
+    temperatura_min?: number | null;
+    humedad?: number | null;
+    precipitacion?: number | null;
+    velocidad_viento?: number | null;
+    descripcion?: string;
+  }>;
+  historico_diario?: Array<{
+    fecha: string;
+    temperatura_max?: number | null;
+    temperatura_min?: number | null;
+    temperatura_media?: number | null;
+    precipitacion?: number | null;
+    velocidad_viento_max?: number | null;
+    humedad_media?: number | null;
+    fuente?: string;
+  }>;
+  estaciones_ideam?: Array<{
+    codigo?: string;
+    nombre?: string;
+    departamento?: string;
+    municipio?: string;
+    temperatura_registrada?: number | null;
+    fecha_observacion?: string;
+    sensor?: string;
+    fuente?: string;
+  }>;
+  datos_completos?: Record<string, unknown>;
 }
 
 export interface ApiKey {

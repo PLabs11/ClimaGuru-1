@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "ClimaGuru API Collection - Modelos NMM, Nowcasting, Energía & IA",
+    "_postman_id": "climaguru-advanced-collection-2026",
+    "description": "Colección completa para probar los nuevos endpoints de ClimaGuru: Modelos NMM de Meteoblue, Nowcasting de 2 Horas gratuito, Predicción de Energía Solar y Eólica, y Asistente de Toma de Decisiones.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000",
+      "type": "string"
+    },
+    {
+      "key": "meteoblue_api_key",
+      "value": "0dvO2kqZSoiAmb7g",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Asistente IA de Toma de Decisiones (4 Sectores)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ciudad\": \"Medellin\",\n  \"sector\": \"todos\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/consultas/analisis-decision",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "consultas", "analisis-decision"]
+        },
+        "description": "Evalúa reglas físicas y genera dictamen de toma de decisiones para Agricultura, Aviación (VFR/IFR), Logística y Gestión del Riesgo."
+      }
+    },
+    {
+      "name": "2. Nowcasting Gratuito (Minuto a Minuto - 2 Horas)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/consultas/nowcasting?ciudad=Medellin",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "consultas", "nowcasting"],
+          "query": [
+            {
+              "key": "ciudad",
+              "value": "Medellin"
+            }
+          ]
+        },
+        "description": "Alternativa 100% gratuita a Meteosource Premium. Entrega 8 intervalos de 15 minutos (120 minutos) con probabilidad de lluvia, intensidad y cobertura de radar Doppler."
+      }
+    },
+    {
+      "name": "3. Predicción de Energía Solar y Eólica (kWh)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/consultas/energia-renovable?ciudad=Medellin&solar_kwp=5.0&eolica_kw=10.0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "consultas", "energia-renovable"],
+          "query": [
+            {
+              "key": "ciudad",
+              "value": "Medellin"
+            },
+            {
+              "key": "solar_kwp",
+              "value": "5.0"
+            },
+            {
+              "key": "eolica_kw",
+              "value": "10.0"
+            }
+          ]
+        },
+        "description": "Alternativa 100% gratuita a los modelos de energía de Meteosource. Calcula la curva de generación horaria y los kWh totales esperados en 24h para paneles solares y turbinas de viento."
+      }
+    },
+    {
+      "name": "4. Meteoblue Dataset API - Modelo NMM18 / NEMSAUTO (Vía ClimaGuru)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ciudad\": \"Medellin\",\n  \"dominio\": \"NMM18\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/consultas/meteoblue/nmm",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "consultas", "meteoblue", "nmm"]
+        },
+        "description": "Consulta el dataset meso-escalar NMM18 o NEMSAUTO de Meteoblue a través del backend de ClimaGuru."
+      }
+    },
+    {
+      "name": "5. Meteoblue Dataset API - Directo a my.meteoblue.com",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"units\": {\n    \"temperature\": \"C\",\n    \"velocity\": \"km/h\",\n    \"precipitation\": \"mm\"\n  },\n  \"geometry\": {\n    \"type\": \"MultiPoint\",\n    \"coordinates\": [\n      [-75.5812, 6.2442, 1495]\n    ]\n  },\n  \"queries\": [\n    {\n      \"domain\": \"NMM18\",\n      \"timeResolution\": \"hourly\",\n      \"codes\": [\n        {\"code\": 11, \"level\": \"2 m above gnd\"},\n        {\"code\": 32, \"level\": \"10 m above gnd\"},\n        {\"code\": 61, \"level\": \"surface\"}\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://my.meteoblue.com/dataset/query?apikey={{meteoblue_api_key}}",
+          "protocol": "https",
+          "host": ["my", "meteoblue", "com"],
+          "path": ["dataset", "query"],
+          "query": [
+            {
+              "key": "apikey",
+              "value": "{{meteoblue_api_key}}"
+            }
+          ]
+        },
+        "description": "Consulta directa a los servidores suizos de Meteoblue sin pasar por el backend local."
+      }
+    }
+  ]
+}

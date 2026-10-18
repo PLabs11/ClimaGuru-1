@@ -46,6 +46,7 @@ def validar_password(password):
 
 
 @auth_bp.route('/registro', methods=['POST'])
+@auth_bp.route('/register', methods=['POST'])
 def registro():
     """
     Registrar nuevo usuario
@@ -104,15 +105,17 @@ def registro():
         db.session.commit()
         
         # Generar tokens
-        access_token = create_access_token(identity=nuevo_usuario.id)
-        refresh_token = create_refresh_token(identity=nuevo_usuario.id)
+        access_token = create_access_token(identity=str(nuevo_usuario.id))
+        refresh_token = create_refresh_token(identity=str(nuevo_usuario.id))
         
         # Crear sesión
         crear_sesion(nuevo_usuario.id, access_token)
         
+        usuario_dict = nuevo_usuario.to_dict()
         return jsonify({
             'mensaje': 'Usuario registrado exitosamente',
-            'usuario': nuevo_usuario.to_dict(),
+            'usuario': usuario_dict,
+            'user': usuario_dict,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 201
@@ -136,11 +139,14 @@ def login():
     """
     try:
         data = request.get_json()
-        
-        if not all(k in data for k in ['username_or_email', 'password']):
+        if not data:
             return jsonify({'error': 'Faltan credenciales'}), 400
         
-        username_or_email = data['username_or_email'].strip()
+        username_or_email = data.get('username_or_email') or data.get('username') or data.get('email')
+        if not username_or_email or not data.get('password'):
+            return jsonify({'error': 'Faltan credenciales'}), 400
+        
+        username_or_email = str(username_or_email).strip()
         password = data['password']
         
         # Buscar usuario por username o email
@@ -162,15 +168,17 @@ def login():
         usuario.actualizar_ultimo_acceso()
         
         # Generar tokens
-        access_token = create_access_token(identity=usuario.id)
-        refresh_token = create_refresh_token(identity=usuario.id)
+        access_token = create_access_token(identity=str(usuario.id))
+        refresh_token = create_refresh_token(identity=str(usuario.id))
         
         # Crear sesión
         crear_sesion(usuario.id, access_token)
         
+        usuario_dict = usuario.to_dict(include_stats=True)
         return jsonify({
             'mensaje': 'Login exitoso',
-            'usuario': usuario.to_dict(include_stats=True),
+            'usuario': usuario_dict,
+            'user': usuario_dict,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
@@ -193,7 +201,7 @@ def refresh():
     """
     try:
         usuario_id = get_jwt_identity()
-        nuevo_access_token = create_access_token(identity=usuario_id)
+        nuevo_access_token = create_access_token(identity=str(usuario_id))
         
         # Actualizar sesión
         crear_sesion(usuario_id, nuevo_access_token)
@@ -247,13 +255,15 @@ def perfil():
     """
     try:
         usuario_id = get_jwt_identity()
-        usuario = Usuario.query.get(usuario_id)
+        usuario = Usuario.query.get(int(usuario_id))
         
         if not usuario:
             return jsonify({'error': 'Usuario no encontrado'}), 404
         
+        usuario_dict = usuario.to_dict(include_stats=True)
         return jsonify({
-            'usuario': usuario.to_dict(include_stats=True)
+            'usuario': usuario_dict,
+            'user': usuario_dict
         }), 200
         
     except Exception as e:
@@ -285,6 +295,7 @@ def crear_sesion(usuario_id, token):
         db.session.commit()
         
     except Exception as e:
+        db.session.rollback()
         print(f"Error al crear sesión: {e}")
         # No fallar si no se puede crear la sesión
         pass

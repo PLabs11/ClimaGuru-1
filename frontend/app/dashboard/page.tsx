@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   BarChart3,
   CalendarDays,
@@ -10,6 +11,10 @@ import {
   Droplets,
   Gauge,
   Wind,
+  Database,
+  ArrowUpRight,
+  Activity,
+  CloudSun,
 } from "lucide-react";
 import {
   AreaChart,
@@ -73,14 +78,44 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Resumen general de tus consultas climaticas
-        </p>
+      {/* Header Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-r from-card via-card to-primary/5 p-6 shadow-sm">
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                Sistema Operativo &bull; MariaDB / MySQL Activo
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Panel Meteorológico ClimaGuru
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+              Consulta datos meteorológicos en tiempo real, análisis histórico y estado de bases de datos.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/dashboard/mapa"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-primary/25"
+            >
+              <CloudSun className="h-4 w-4" />
+              <span>Consultar Mapa</span>
+            </Link>
+            <a
+              href="http://localhost:8080"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/80 px-4 py-2.5 text-sm font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-secondary"
+            >
+              <Database className="h-4 w-4 text-emerald-500" />
+              <span>phpMyAdmin</span>
+              <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Stat cards */}

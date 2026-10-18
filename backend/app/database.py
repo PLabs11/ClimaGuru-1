@@ -197,10 +197,11 @@ def init_database(app):
             logger.info(f"Tablas encontradas: {schema_status.get('total_existentes', 0)}")
             
             if schema_status.get('tablas_faltantes'):
-                logger.warning(
-                    "⚠️  Algunas tablas esperadas no existen. "
-                    "Ejecuta las migraciones o el script SQL."
-                )
+                try:
+                    db.create_all()
+                    logger.info("Tablas creadas automáticamente con db.create_all()")
+                except Exception as ex:
+                    logger.warning(f"No se pudieron auto-crear tablas: {ex}")
             
             return True
         

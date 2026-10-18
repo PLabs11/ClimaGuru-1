@@ -1,10 +1,13 @@
 """
 Modelo de API Keys para ClimaGuru
+Mapeado exactamente con la tabla `api_keys` de la base de datos
 """
 from app import db
 from datetime import datetime
 from cryptography.fernet import Fernet
+from sqlalchemy.orm import synonym
 import os
+import base64
 
 
 class APIKey(db.Model):
@@ -14,99 +17,92 @@ class APIKey(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True)
-    servicio_nombre = db.Column(db.String(50), nullable=False)
-    api_key = db.Column(db.String(255), nullable=False)  # Se guarda encriptada
-    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
-    fecha_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    activa = db.Column(db.Boolean, default=True)
+    proveedor = db.Column(db.String(50), nullable=False, index=True)
+    api_key_encrypted = db.Column(db.Text, nullable=False)
+    api_secret_encrypted = db.Column(db.Text, nullable=True)
+    descripcion = db.Column(db.String(255), nullable=True)
+    activa = db.Column(db.Boolean, default=True, index=True)
+    limite_consultas_diarias = db.Column(db.Integer, default=1000)
+    consultas_realizadas = db.Column(db.Integer, default=0)
+    ultimo_uso = db.Column(db.DateTime, nullable=True)
+    creada_en = db.Column(db.DateTime, default=datetime.utcnow)
+    actualizada_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Índice único compuesto
+    # Compatibilidad con código que use servicio_nombre o fecha_registro
+    servicio_nombre = synonym('proveedor')
+    fecha_registro = synonym('creada_en')
+    fecha_actualizacion = synonym('actualizada_en')
+    
     __table_args__ = (
-        db.UniqueConstraint('usuario_id', 'servicio_nombre', name='unique_user_service'),
+        db.UniqueConstraint('usuario_id', 'proveedor', name='unique_proveedor_usuario'),
     )
     
-    def __init__(self, usuario_id, servicio_nombre, api_key_texto):
-        """
-        Inicializar API Key
-        
-        Args:
-            usuario_id: ID del usuario propietario
-            servicio_nombre: Nombre del servicio (ej: 'OpenWeatherMap', 'WeatherAPI')
-            api_key_texto: API key en texto plano (se encriptará automáticamente)
-        """
+    def __init__(self, usuario_id, proveedor=None, api_key_texto=None, servicio_nombre=None, descripcion=None, api_secret=None):
         self.usuario_id = usuario_id
-        self.servicio_nombre = servicio_nombre
-        self.set_api_key(api_key_texto)
-    
+        self.proveedor = proveedor or servicio_nombre
+        self.descripcion = descripcion
+        if api_key_texto:
+            self.set_api_key(api_key_texto)
+        if api_secret:
+            self.set_api_secret(api_secret)
+            
     def set_api_key(self, api_key_texto):
-        """
-        Encriptar y guardar API key
-        
-        Args:
-            api_key_texto: API key en texto plano
-        """
+        """Encriptar y guardar API key"""
         cipher = self._get_cipher()
-        self.api_key = cipher.encrypt(api_key_texto.encode()).decode()
-        self.fecha_actualizacion = datetime.utcnow()
+        self.api_key_encrypted = cipher.encrypt(api_key_texto.encode('utf-8')).decode('utf-8')
+        self.actualizada_en = datetime.utcnow()
     
     def get_api_key(self):
-        """
-        Desencriptar y obtener API key
-        
-        Returns:
-            str: API key en texto plano
-        """
+        """Desencriptar y obtener API key"""
+        if not self.api_key_encrypted:
+            return ""
+        try:
+            cipher = self._get_cipher()
+            return cipher.decrypt(self.api_key_encrypted.encode('utf-8')).decode('utf-8')
+        except Exception:
+            return self.api_key_encrypted
+
+    def set_api_secret(self, secret_texto):
+        """Encriptar y guardar API secret"""
         cipher = self._get_cipher()
-        return cipher.decrypt(self.api_key.encode()).decode()
+        self.api_secret_encrypted = cipher.encrypt(secret_texto.encode('utf-8')).decode('utf-8')
+
+    def get_api_secret(self):
+        """Desencriptar API secret"""
+        if not self.api_secret_encrypted:
+            return None
+        try:
+            cipher = self._get_cipher()
+            return cipher.decrypt(self.api_secret_encrypted.encode('utf-8')).decode('utf-8')
+        except Exception:
+            return self.api_secret_encrypted
     
     @staticmethod
     def _get_cipher():
-        """
-        Obtener objeto cipher para encriptación
-        
-        Returns:
-            Fernet: Objeto para encriptar/desencriptar
-        """
-        # Obtener clave de encriptación desde variables de entorno
-        encryption_key = os.getenv('ENCRYPTION_KEY', '').encode()
-        
-        # Si no hay clave o es muy corta, usar una por defecto (NO SEGURO EN PRODUCCIÓN)
-        if len(encryption_key) < 32:
-            # Generar una clave base64 válida
-            encryption_key = Fernet.generate_key()
-        
-        return Fernet(encryption_key)
+        key = os.getenv('ENCRYPTION_KEY', 'climaguru_dev_encryption_key_32chars_ok!')
+        key_bytes = key.encode('utf-8')
+        key_b64 = base64.urlsafe_b64encode(key_bytes.ljust(32)[:32])
+        return Fernet(key_b64)
     
-    def to_dict(self, include_key=False):
-        """
-        Convertir a diccionario
-        
-        Args:
-            include_key: Si es True, incluye la API key desencriptada (usar con cuidado)
-        
-        Returns:
-            dict: Representación de la API key
-        """
+    def to_dict(self, include_key=True):
+        """Convertir a diccionario"""
+        key = self.get_api_key() if self.api_key_encrypted else ""
         data = {
             'id': self.id,
-            'servicio_nombre': self.servicio_nombre,
-            'fecha_registro': self.fecha_registro.isoformat(),
-            'fecha_actualizacion': self.fecha_actualizacion.isoformat(),
-            'activa': self.activa
+            'usuario_id': self.usuario_id,
+            'proveedor': self.proveedor,
+            'servicio_nombre': self.proveedor,
+            'descripcion': self.descripcion,
+            'activa': bool(self.activa),
+            'limite_consultas_diarias': self.limite_consultas_diarias,
+            'consultas_realizadas': self.consultas_realizadas,
+            'ultimo_uso': self.ultimo_uso.isoformat() if self.ultimo_uso else None,
+            'creada_en': self.creada_en.isoformat() if self.creada_en else None,
+            'actualizada_en': self.actualizada_en.isoformat() if self.actualizada_en else None,
+            'api_key': key,
+            'api_key_preview': f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "***"
         }
-        
-        if include_key:
-            # Solo incluir si explícitamente se solicita
-            data['api_key'] = self.get_api_key()
-        else:
-            # Mostrar versión parcialmente oculta
-            key = self.get_api_key()
-            if len(key) > 8:
-                data['api_key_preview'] = f"{key[:4]}...{key[-4:]}"
-            else:
-                data['api_key_preview'] = "***"
-        
         return data
     
     def __repr__(self):
-        return f'<APIKey {self.servicio_nombre} - Usuario {self.usuario_id}>'
+        return f'<APIKey {self.proveedor} - Usuario {self.usuario_id}>'

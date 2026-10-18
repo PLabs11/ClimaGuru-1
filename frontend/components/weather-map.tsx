@@ -33,8 +33,8 @@ export function WeatherMap({
       const L = (window as unknown as { L: typeof import("leaflet") }).L;
 
       const map = L.map(mapRef.current!, {
-        center: [19.4326, -99.1332], // CDMX default
-        zoom: 5,
+        center: [6.2442, -75.5812], // Medellin / Colombia default
+        zoom: 6,
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {

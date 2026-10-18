@@ -20,6 +20,14 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import json
 
+# Configurar codificación UTF-8 en Windows para evitar UnicodeEncodeError
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 # Añadir el directorio raíz al path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -28,9 +36,13 @@ from src.data_sources.meteoblue import MeteoblueClient
 from src.data_sources.open_meteo import OpenMeteoClient
 from src.data_sources.openweather import OpenWeatherMapClient
 from src.data_sources.Meteosource import MeteosourceAPI
-from src.data_sources.ideam_radar_downloader import IDEAMRadarDownloader
 from src.data_sources.siata_cliente import SIATADownloader
-from src.processors.radar_processor import RadarDataProcessor
+try:
+    from src.data_sources.ideam_radar_downloader import IDEAMRadarDownloader
+    from src.processors.radar_processor import RadarDataProcessor
+except ImportError:
+    IDEAMRadarDownloader = None
+    RadarDataProcessor = None
 
 
 class ClimAPIManager:
@@ -101,9 +113,12 @@ class ClimAPIManager:
         
         # IDEAM Radar (AWS público, no requiere credenciales)
         try:
-            self.ideam_radar = IDEAMRadarDownloader()
-            self.radar_processor = RadarDataProcessor()
-            print("✅ IDEAM Radar inicializado")
+            if IDEAMRadarDownloader and RadarDataProcessor:
+                self.ideam_radar = IDEAMRadarDownloader()
+                self.radar_processor = RadarDataProcessor()
+                print("✅ IDEAM Radar inicializado")
+            else:
+                print("⚠️  IDEAM Radar: Módulo no disponible (requiere boto3)")
         except Exception as e:
             print(f"⚠️  IDEAM Radar: Error al inicializar - {e}")
         

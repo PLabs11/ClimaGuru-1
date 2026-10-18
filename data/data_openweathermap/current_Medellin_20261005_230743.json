@@ -1,0 +1,33 @@
+{
+  "location": "Medellin",
+  "coordinates": {
+    "lat": 6.25184,
+    "lon": -75.56359
+  },
+  "timestamp": "2026-10-05T23:05:47",
+  "weather": {
+    "description": "lluvia ligera",
+    "main": "Rain",
+    "icon": "10n"
+  },
+  "temperature": {
+    "current": 18.1,
+    "feels_like": 18.37,
+    "min": 17.67,
+    "max": 19.01
+  },
+  "pressure": 1015,
+  "humidity": 92,
+  "visibility": 4.18,
+  "wind": {
+    "speed": 4.92,
+    "direction": 80,
+    "gust": 0
+  },
+  "clouds": 93,
+  "sunrise": "05:49:18",
+  "sunset": "17:51:48",
+  "rain": {
+    "1h": 0.25
+  }
+}

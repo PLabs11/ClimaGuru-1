@@ -1,0 +1,3 @@
+2026-10-15 19:18:55,467 - INFO - IDEAMRadarDownloader inicializado
+2026-10-15 19:18:55,469 - INFO - Bucket AWS: s3://s3-radaresideam
+2026-10-15 19:18:55,469 - INFO - Directorio de datos: data\Radar_IDEAM

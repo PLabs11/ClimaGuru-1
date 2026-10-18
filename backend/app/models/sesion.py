@@ -12,7 +12,7 @@ class Sesion(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True)
-    token = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    token = db.Column(db.String(500), unique=True, nullable=False, index=True)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)

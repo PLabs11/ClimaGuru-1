@@ -49,7 +49,7 @@ def get_usuarios():
     if activo is not None:
         query = query.filter_by(activo=activo.lower() == 'true')
     
-    pagination = query.order_by(Usuario.creado_en.desc()).paginate(
+    pagination = query.order_by(Usuario.fecha_registro.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
